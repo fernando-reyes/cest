@@ -1,0 +1,11 @@
+#! /usr/bin/python
+
+import serial
+#serialData = serial.Serial(port='/dev/ttyUSB1',baudrate=9600,bytesize=8,parity='N',stopbits=1) 
+serialData = serial.Serial('/dev/ttyUSB1')
+# Body of data acquisition code
+while True:
+	print "Waiting..."
+	print serialData.readline()
+	#print serialData.readall()
+	#print serialData.read()

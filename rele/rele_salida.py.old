@@ -1,0 +1,10 @@
+#!/usr/bin/python
+
+import os,string
+
+PIN=15
+ONE=0
+TWO=1
+TIM=1.5
+
+os.system("./set_pin.py %s %s %s %s" % (PIN,ONE,TWO,TIM))

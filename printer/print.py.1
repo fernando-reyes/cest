@@ -1,0 +1,54 @@
+#! /usr/bin/python3
+
+"""
+# -*- coding: cp1252 -*-
+# -*- coding: 850 -*-
+# -*- coding: utf-8 -*-
+# -*- coding: latin-1 -*-
+# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
+"""
+
+from escpos.printer import Network
+from escpos.printer import Usb
+import datetime
+
+# Adapt to your needs
+#p = Serial(devfile="/dev/ttyS0", baudrate=9600)
+#p = Network(host="192.168.1.2")
+#p.soft_barcode('code39', '123456')
+p = Usb(  0x04b8, 0x0e15 )
+id = datetime.datetime.now().strftime("%d%m%H%M%S")
+p.barcode( id , 'CODE39')
+p.text("\n")
+p.text("ESTACIONAMIENTO\n")
+p.text("ANFION MUÑOZ 380\n" )
+p.text("\n")
+p.text("Hector Ramon Martinez Cartes\n")
+p.text("Rut: 6281483-8\n")
+p.text("\n")
+p.text("\n")
+p.text("Tarifa:\n")
+p.text("Cada minuto efectivo $25 pesos\n")
+p.text("Horario atención\n")
+p.text("Desde 07:00 a 23:00 hrs.\n")
+p.text("\n")
+p.text("CONSERVE EL TICKET\n")
+p.text("VALIDE TICKET AL SALIR\n")
+p.text("\n")
+
+p.text("NO DEJAR OBJETOS DE VALOR EN\n")
+p.text("VEHÍCULO\n")
+p.text("PAGUE CASETA DE TAXIS\n")
+p.text("\n")
+p.text("ENTRADA\n")
+p.text("\n")
+date = datetime.datetime.now().strftime("%d/%m/%Y")
+time = datetime.datetime.now().strftime("%H:%M:%S")
+p.text("FECHA y HORA:"+date+"\n")
+p.text("             "+time+"\n")
+p.text("\n")
+p.text("VALE CONTROL INTERNO\n")
+p.text("NO VALIDO COMO BOLETA DE VENTA\n")
+p._raw(b'\x1d'+b'V'+b'\x30' )
+#p.cut()

@@ -1,0 +1,96 @@
+#!/usr/bin/python
+
+import serial,sys,os
+from time import sleep
+from datetime import date,time,datetime
+#from datetime import date
+#from datetime import time
+#from datetime import datetime
+
+serialData = serial.Serial(port='/dev/ttyUSB0',baudrate=9600,bytesize=8,parity='N',stopbits=1) 
+#serialData = serial.Serial(timeout=.1,port='/dev/ttyUSB0',baudrate=9600,bytesize=8,parity='N',stopbits=1) 
+#serialData = serial.Serial('/dev/ttyUSB0')
+
+tickets = "."
+LENGTH = ( 12 * 72 + 1)	#maximo de 72 tickets en aproximadamente 6 minutos
+
+class cd:
+    """Context manager for changing the current working directory"""
+    def __init__(self, newPath):
+        self.newPath = os.path.expanduser(newPath)
+
+    def __enter__(self):
+        self.savedPath = os.getcwd()
+        os.chdir(self.newPath)
+
+    def __exit__(self, etype, value, traceback):
+        os.chdir(self.savedPath)
+
+def log(text):
+	fh = open( sys.argv[0] + ".log" , "a") 
+	fh.write( datetime.now().strftime("%Y-%m-%d %H:%M:%S ") + text + "\n" ) 
+	fh.close 
+
+def sleep_(x):
+	while (not serialData.in_waiting) and (x > 0):
+		sleep(.1)
+		x-=.1
+
+serialData.reset_input_buffer()
+
+while True:
+	print "Waiting..."
+	#print serialData.readline()
+	try:
+		
+		buf=""
+		while True:
+			char = serialData.read()
+			if ( char == "\x0A") or ( char == "\x0D" ):
+				break
+			buf+=char
+		
+		#buf = serialData.read_until("\n")
+		if len( buf ) :
+			log( "Buffer:" + buf )
+			buf = buf[:11]
+		print datetime.now().strftime("%Y-%m-%d %H:%M:%S "), buf
+		#print len( buf )
+		#print buf[10:]
+		#print tickets.find( "."+buf+"." ) 
+		#if len( buf ) == 11 and buf[10:] == "P" and tickets.find( "."+buf+"." ) == -1:
+		if len( buf ) <> 11 or buf[10:] <> "P" or tickets.find( "."+buf+"." ) <> -1:
+			os.system("echo -n 'TICKET NO VALIDO;CONSULTE EN CAJA' > ../lcd/message")
+			sleep_(5)
+			os.system("echo -n '@' > ../lcd/message")
+		else:
+			try:
+				open( '../trn/salidas/tickets/'+buf , 'w').write( datetime.now().strftime("%Y/%m/%d %H:%M:%S") )
+			except:
+				pass
+			buf = buf[:-1]
+			date1 = datetime.today() 
+			date2 = datetime( date1.year , int( buf[2:-6] ), int( buf[0:-8] ), int( buf[4:-4] ), int( buf[6:-2] ), int( buf[8:] ) )
+			secs  = (date1-date2).seconds
+			days  = (date1-date2).days
+			diff  = days*86400 + secs
+			print "seconds =",secs
+			print "days    =",days
+			print "diff    =",diff
+			#debemos considerar un adelanto del pc... (diff<0)
+			if (-5*60) < diff < (15*60):	#consideramos una diferencia de tiempo de 15 minutos
+				tickets = ("." + buf + "P" + tickets)[ :LENGTH ] 
+				with cd("../rele"):
+					os.system("./rele_salida.py")
+				serialData.reset_input_buffer()	# por si algun gracioso...
+			else:
+				os.system("echo -n 'TIEMPO SOBREPASADO;CONSULTE EN CAJA' > ../lcd/message")
+				sleep_(5)
+				os.system("echo -n '@' > ../lcd/message")
+	except KeyboardInterrupt:
+		print "Cancel:", sys.exc_info()[0]
+		break
+
+	except:
+		pass
+		
